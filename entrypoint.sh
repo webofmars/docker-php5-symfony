@@ -15,15 +15,17 @@ if [ -z "$1" ];
             curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
         fi
     fi
-    # variable provided by ansible when launching the docker container
-    mkdir ~/.composer
-    cat > ~/.composer/config.json <<EOS
-{
-    "config": {
-        "github-oauth": { "github.com": "$GITHUB_TOKEN" }
-    }
-}
+
+  if [ ! -z "$GITHUB_TOKEN" ]; then
+      mkdir ~/.composer
+      cat > ~/.composer/config.json <<EOS
+  {
+      "config": {
+          "github-oauth": { "github.com": "$GITHUB_TOKEN" }
+      }
+  }
 EOS
+  fi
     # we make sure to start fresh
     rm app/config/parameters.yml
     composer install --no-interaction
@@ -32,19 +34,19 @@ EOS
     else
         mkdir app/cache
     fi
-    php app/console assets:install --env=prod --symlink web/
-    php app/console c:c
-    php app/console c:w
-    php app/console doctrine:migrations:migrate --no-interaction
-    php app/console assetic:dump  --env=prod --no-debug
-    # not pretty ...
+
+    # fix permissions
     chmod -R 777 app/logs
     chmod -R 777 app/cache
     touch app/ready
     chmod 666 app/ready
 
+    php app/console assets:install --env=prod --symlink web/
+    php app/console c:c
+    php app/console c:w
+
     # Finaly start the composer server
-    php app/console server:start
+    exec php app/console server:run 0.0.0.0:8000
 
 else
     exec "$@"
