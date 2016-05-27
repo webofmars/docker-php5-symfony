@@ -38,4 +38,4 @@ VOLUME "/var/www"
 WORKDIR "/var/www"
 
 ENTRYPOINT ["/root/entrypoint.sh"]
-EXPOSE 80
+EXPOSE 8000
